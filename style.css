@@ -4,8 +4,12 @@
   box-sizing: border-box;
 }
 :root {
-  --hvrclr: #838282;
+  --hvrclr: #add1d5;
   --oandxclr: #000000;
+  --lime: #d9d28d;
+  --bluishgreen: #65b9bc;
+  --midgreen: #4db88d;
+  --underCells: #caedf1;
 }
 
 .board {
@@ -13,7 +17,7 @@
   display: grid;
   width: 500px;
   height: 500px;
-  background-color: lightblue;
+  background-color: var(--bluishgreen);
   grid-template: repeat(3, 1fr) / repeat(3, 1fr);
   gap: 10px;
   border: none;
@@ -24,7 +28,7 @@
 .cell {
   border: none;
   border-radius: 10px;
-  background-color: #ffffff;
+  background-color: var(--underCells);
   position: relative;
   display: flex;
   justify-content: center;
@@ -38,7 +42,7 @@
   position: absolute;
   height: 90%;
   width: 8%;
-  background-color: var(--oandxclr);
+  background-color: var(--midgreen);
   transform: rotate(45deg);
 }
 
@@ -57,7 +61,7 @@
 .board.circle .cell:not(.x):not(.circle):hover::before {
   content: "";
   position: absolute;
-  background-color: var(--oandxclr);
+  background-color: var(--lime);
   border-radius: 50%;
 }
 
@@ -70,7 +74,7 @@
 .board.circle .cell:not(.x):not(.circle):hover::after {
   width: 75%;
   height: 75%;
-  background-color: #ffffff;
+  background-color: var(--underCells);
 }
 
 .board.circle .cell:not(.x):not(.circle):hover::before {
@@ -84,14 +88,104 @@
   justify-content: center;
 }
 
+/* buttons */
+.buttonContainer {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
 .switch {
   display: block;
-  width: 100px;
+  width: 117px;
   height: 50px;
-  margin-bottom: 100px;
+  margin-bottom: 10px;
   border-radius: 10px;
   border: 1px solid lightblue;
-  background-color: lightblue;
+  background-color: white;
+  color: var(--bluishgreen);
+  font-weight: 700;
+  font-size: 1rem;
+  transition: width 0.2s;
+}
+
+.switch:hover {
+  background-color: var(--bluishgreen);
   color: white;
+  width: 120px;
+}
+.switch:active {
+  transform: translateY(2px);
+}
+
+.chosen {
+  background-color: var(--midgreen);
+  color: white;
+}
+.chosen:hover {
+  background-color: var(--midgreen);
+  color: white;
+}
+
+/* curtain */
+.curtain {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: lightblue;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.curtain.off {
+  display: none;
+}
+
+.curtain > form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   font-size: 1.5rem;
+}
+
+form input,
+form button {
+  outline: none;
+  border: 1px solid var(--hvrclr);
+  border-radius: 5px;
+  font-family: unset;
+}
+
+form input {
+  margin-top: 10px;
+  height: 40px;
+  width: 200px;
+  padding-left: 10px;
+  font-size: 1.7rem;
+  background-color: #e2f0f1;
+}
+
+form button {
+  margin-top: 20px;
+  background-color: none;
+  width: 60px;
+  height: 50px;
+  border: none;
+  transition: width 0.2s;
+  font-size: 1.1rem;
+}
+
+form button:hover {
+  background-color: var(--bluishgreen);
+  color: white;
+  width: 80px;
+}
+
+form button:active {
+  background-color: var(--midgreen);
+  transform: translateY(2px);
 }
