@@ -30,7 +30,6 @@ function Cell() {
 function RandomAi(board) {
   const aiRound = () => {
     const emptyIndexes = board.getEmptyIndexes();
-    console.log(emptyIndexes);
     const getRandom = (max) => {
       return Math.floor(Math.random() * max);
     };
@@ -45,7 +44,7 @@ function RandomAi(board) {
 }
 
 function MinimaxAi(gameboard) {
-  //make new instance of board and copy over values from main instance
+  //make new instance of Gameboard and copy over values from main instance
   const newInstanceOfGameBoard = Gameboard();
   const { getWinCondition } = winCondition;
   const minimaxRound = () => {
@@ -102,7 +101,6 @@ function MinimaxAi(gameboard) {
       if (score > bestScore) {
         bestScore = score;
         bestMoveIndex = move;
-        console.log(bestMoveIndex);
       }
     }
     return bestMoveIndex;
@@ -157,31 +155,34 @@ const winCondition = (() => {
   };
 })();
 
-function GameController(playerOne = "Player One", playerTwo = "player Two") {
+function GameController() {
   const { getWinCondition } = winCondition;
   const board = Gameboard();
   const ai = RandomAi(board);
   const minimax = MinimaxAi(board);
   const players = [
-    { name: playerOne, mark: 1 },
-    { name: playerTwo, mark: 2 },
+    { name: "playerOne", mark: 1 },
+    { name: "playerTwo", mark: 2 },
   ];
   let currentTurn = players[0];
   const changeTurn = () => {
     currentTurn = currentTurn === players[0] ? players[1] : players[0];
   };
   const getCurrentTurn = () => currentTurn;
-
+  // get value from UI and pass it to controller
   const modeHandler = (() => {
     let currMode = "";
     const updateMode = (mode = currMode) => {
-      console.log("hi");
-      currMode = mode;
+      if (mode !== "Reset") {
+        currMode = mode;
+      }
       board.getBoard().forEach((e) => e.setValue(0));
+      currentTurn = players[0];
     };
     const getMode = () => currMode;
     return { updateMode, getMode };
   })();
+  // mode dependent part of turn
   const playRoundHandler = (cell) => {
     if (board.getValueBoard()[cell] !== 0) return;
     if (currentTurn.mark === 1 && modeHandler.getMode() === "RandomAi") {
@@ -192,25 +193,30 @@ function GameController(playerOne = "Player One", playerTwo = "player Two") {
         lastCell.length > 1 &&
         getWinCondition(board.getValueBoard()) === null
       ) {
-        // playRound(minimax.minimaxRound());
         playRound(aiCell);
-        console.log(aiCell);
+      }
+    } else if (
+      currentTurn.mark === 1 &&
+      modeHandler.getMode() === "MinimaxAi"
+    ) {
+      const lastCell = board.getValueBoard().filter((e) => e === 0);
+      playRound(cell);
+      if (
+        lastCell.length > 1 &&
+        getWinCondition(board.getValueBoard()) === null
+      ) {
+        playRound(minimax.minimaxRound());
       }
     } else {
       playRound(cell);
     }
   };
+  // value assignment
   const playRound = (cell) => {
     board.getBoard()[cell].setValue(currentTurn.mark);
     //check for win condition
     const winner = getWinCondition(board.getValueBoard());
-    if (winner === 1) {
-      console.log("x wins");
-    } else if (winner === 2) {
-      console.log("o wins");
-    } else if (winner === "tie") {
-      console.log("tie");
-    } else {
+    if (winner === null) {
       changeTurn();
     }
   };
@@ -233,7 +239,7 @@ function UIController() {
   const startGame = document.querySelector(".startGame");
   const alarm = document.querySelector("h2");
   boardDiv.classList.add("x");
-
+  //read value arr and render state
   const updateBoard = () => {
     boardDiv.textContent = "";
     const board = game.board.getBoard();
@@ -245,7 +251,6 @@ function UIController() {
         if (e.getValue() === 1) {
           instance.classList.add("x");
         } else if (e.getValue() === 2) {
-          console.log(e.getValue());
           instance.classList.add("circle");
         }
         boardDiv.appendChild(instance);
@@ -253,6 +258,7 @@ function UIController() {
     };
     createTable();
   };
+  //change container class for hover preview
   const changeBoardMarker = () => {
     if (game.getCurrentTurn().mark === 1) {
       boardDiv.classList.replace("circle", "x");
@@ -260,25 +266,28 @@ function UIController() {
       boardDiv.classList.replace("x", "circle");
     }
   };
+  //pass value of selected cell from UI to controller and check for winner
   const eventHandler = (e) => {
     if (!e.target.classList.contains("cell")) return;
     const fieldClicked = e.target.dataset.index;
     game.playRoundHandler(fieldClicked);
-    console.log(fieldClicked);
     updateBoard();
-    console.log(getWinCondition(game.board.getValueBoard()));
-    if (getWinCondition(game.board.getValueBoard()) === 1) {
-      console.log();
-      game.modeHandler();
-      updateBoard();
+    let value = "";
+    if (getWinCondition(game.board.getValueBoard()) !== null) {
+      if (getWinCondition(game.board.getValueBoard()) === 1) {
+        value = "The winner is X!";
+      } else if (getWinCondition(game.board.getValueBoard()) === 2) {
+        value = "The winner is O!";
+      } else if (getWinCondition(game.board.getValueBoard()) === "tie") {
+        value = "Tie!";
+      }
+      winScreen(value);
     }
     changeBoardMarker();
   };
-
   boardDiv.addEventListener("click", eventHandler);
-
+  // there is 2 sets of button, here one update another (to have selected mode visually differ)
   const synchronizeButtonSets = (target) => {
-    console.log(target);
     const buttons = document.querySelectorAll(".switch");
     [...buttons].forEach((e) => {
       if (e.classList.contains(target) && !e.classList.contains("Reset")) {
@@ -287,8 +296,10 @@ function UIController() {
         e.classList.remove("chosen");
       }
     });
+    // pass mode for further processing
     formControl.setState(target);
   };
+  // create sets of buttons
   const switchers = () => {
     const createDivWithButtons = () => {
       const buttonDiv = document.createElement("div");
@@ -314,36 +325,68 @@ function UIController() {
 
     container.insertBefore(createDivWithButtons(), boardDiv);
   };
+  // pass mode to controller with some validation and UI handling
   const formControl = (() => {
     let mode = false;
     let name = "";
+    const nameControl = (name) => {
+      const nameInHeader = document.querySelector(".container > h1");
+      if (name) {
+        if (mode === "PvP") {
+          nameInHeader.innerHTML = `${name} solo play`;
+        } else if (mode !== "Reset") {
+          nameInHeader.innerHTML = `${name} vs ${mode}`;
+        }
+      }
+    };
     const setState = (newState) => {
       mode = newState;
       alarm.style.color = "black";
-      console.log(newState);
       game.modeHandler(mode);
-      // lose state to early, need to pass from here to curtain and stuff
       updateBoard();
+      nameControl(name);
+      boardDiv.classList.replace("circle", "x");
     };
     const validation = (playerName) => {
       if (!mode) {
         alarm.style.color = "red";
-        console.log("CHOOOOOSE");
       } else {
         name = playerName;
         curtainContainer.classList.add("off");
         game.modeHandler(mode);
         updateBoard();
-        console.log(name);
+        nameControl(name);
       }
     };
     return { setState, validation };
   })();
+  // name input handling
   startGame.addEventListener("click", () => {
     const inputField = document.querySelector("input");
-    const inputValue = inputField.value;
+    let inputValue = "";
+    if (inputField.value === "") {
+      inputValue = "Anonymous";
+    } else {
+      inputValue = inputField.value;
+    }
     formControl.validation(inputValue);
   });
+  // winner pop-up
+  const winScreen = (value) => {
+    const winBanner = document.createElement("div");
+    const restartBtn = document.createElement("button");
+    winBanner.classList.add("winBanner");
+    winBanner.textContent = value;
+    restartBtn.textContent = "Play again";
+    boardDiv.appendChild(winBanner);
+    winBanner.appendChild(restartBtn);
+    winBanner.addEventListener("click", () => {
+      winBanner.classList.add("off");
+      game.modeHandler();
+      updateBoard();
+      boardDiv.classList.replace("circle", "x");
+    });
+  };
   switchers();
   updateBoard();
 }
